@@ -21,30 +21,48 @@ namespace Calc
             var result = _calc.StartCalculating(source);
             result.Should().Be("0");
         }
+
         [Fact]
         public void Calculation_ShouldReturnANumberOfTypeDouble_IfSourceHaveCommas()
         {
-            var source = "1,123";
+            var source = "1.123";
             var result = _calc.StartCalculating(source);
-            result.Should().Be("1.123");
+            result.Should().Be("1,123");
         }
-        [Fact]
-        public void Calculation_ShouldReturnANumberOfTypeDouble_IfSourceHaveOperatorsAtTheBeggining()
+
+        [Theory]
+        [InlineData("+123", "123")]
+        [InlineData("-123", "-123")]
+        [InlineData("(123)","123")]
+        [InlineData("*123", "0")]
+        [InlineData("/123", "0")]
+        public void Calculation_ShouldReturnANumberOfTypeDouble_IfSourceHaveOperatorsAtTheBeggining(string source, string output)
         {
-            var arrStr = new string[] { "+123", "*123", "/123" };
-            var arrResult = new string[3];
-            for (int i = 0; i < arrStr.Length; i++)
-            {
-                arrResult[i] = _calc.StartCalculating(arrStr[i]);
-                arrResult[0].Should().Be("123");
-            }
+                var result = _calc.StartCalculating(source);
+                result.Should().Be(output);
         }
-        [Fact]
-        public void Calculation_ShouldReturnCorrectANumberOfTypeDouble_IfSourceIsAnExpressionWithPriorityOperators()
+
+        [Theory]
+        [InlineData(" 1 + 2 * ( 4 / 2 ) ", "5")]
+        [InlineData("2+2 * 2/ 2", "4")]
+        [InlineData("0/2","0")]
+        [InlineData("(4,5+4,5)/2","4,5")]
+        public void Calculation_ShouldReturnCorrectANumberOfTypeDouble_IfSourceIsAnExpressionWithPriorityOperators(string source, string output)
         {
-            var source = "1+2*(4/2)";
             var result = _calc.StartCalculating(source);
-            result.Should().Be("5");
+            result.Should().Be(output);
+        }
+
+        [Theory]
+        [InlineData("()", "Expression error")]
+        [InlineData("123()", "Expression error")]
+        [InlineData("()123+123", "Expression error")]
+        [InlineData("123(123)", "Expression error")]
+        [InlineData("123 + 321 abc", "Expression error")]
+        public void Calculation_ShouldReturnAnError_IfSourceIsUncorrect(string source, string output)
+        {
+            var result = _calc.StartCalculating(source);
+            result.Should().Be(output);
         }
     }
     class Calculator
@@ -64,10 +82,18 @@ namespace Calc
 
         public string StartCalculating(string SourceStr)
         {
-            _string = SourceStr;
+            _string = SourceStr.Replace(" ", "");
             indexsrc = 0;
             GetSymbol();
-            return MethodE().ToString();
+            try
+            {
+                return MethodE().ToString();
+            }
+            catch(Exception ex)
+            {
+                return ex.Message;
+            }
+            
 
         }
         private double MethodE()
@@ -104,6 +130,7 @@ namespace Calc
             if (symbol == '(')
             {
                 GetSymbol();
+                if (symbol == ')') throw new Exception("Expression error");
                 x = MethodE();
                 GetSymbol();
             }
@@ -116,16 +143,9 @@ namespace Calc
                 }
                 else if (symbol >= '0' && symbol <= '9')
                     x = MethodC();
-                else if (symbol == 'c' || symbol == 's')
-                {
-                    string namefunc = "";
-                    while (symbol != '(')
-                    {
-                        namefunc += (char)symbol;
-                        GetSymbol();
-
-                    }
-                }
+                if (symbol >= 'a' && symbol <= 'z')
+                    throw new Exception("Expression error");
+                if (symbol == '(') throw new Exception("Expression error");
             }
             return x;
         }
