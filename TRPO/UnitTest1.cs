@@ -3,6 +3,10 @@ using Xunit;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
+using System.Text;
+using System.Diagnostics.Metrics;
+using System.Numerics;
 
 namespace Calc
 {
@@ -14,12 +18,12 @@ namespace Calc
             _calc = new Calculator();
         }
 
-        [Fact]
-        public void Calculation_ShouldReturnCorrectANumberOfTypeDouble_IfSourceIsEmpty()
+        [Theory]
+        [InlineData("", "0")]
+        [InlineData("()", "0")]
+        public void Calculation_ShouldReturnCorrectANumberOfTypeDouble_IfSourceIsEmpty(string source, string output)
         {
-            var source = string.Empty;
-            var result = _calc.StartCalculating(source);
-            result.Should().Be("0");
+            _calc.StartCalculating(source).Should().Be(output);
         }
 
         [Fact]
@@ -34,6 +38,7 @@ namespace Calc
         [InlineData("+123", "123")]
         [InlineData("-123", "-123")]
         [InlineData("(123)","123")]
+        [InlineData("((123))", "123")]
         [InlineData("*123", "0")]
         [InlineData("/123", "0")]
         public void Calculation_ShouldReturnANumberOfTypeDouble_IfSourceHaveOperatorsAtTheBeggining(string source, string output)
@@ -43,23 +48,31 @@ namespace Calc
         }
 
         [Theory]
-        [InlineData(" 1 + 2 * ( 4 / 2 ) ", "5")]
-        [InlineData("2+2 * 2/ 2", "4")]
-        [InlineData("0/2","0")]
-        [InlineData("(4,5+4,5)/2","4,5")]
-        public void Calculation_ShouldReturnCorrectANumberOfTypeDouble_IfSourceIsAnExpressionWithPriorityOperators(string source, string output)
+        [InlineData("123()", "123")]
+        [InlineData("123)))", "123")]
+        [InlineData("(((123", "123")]
+        [InlineData("()123+123", "246")]
+        [InlineData("123(123)", "15129")]
+        [InlineData("123(123 + 123)", "30258")]
+        [InlineData("123(123 + 123)))))", "30258")]
+        [InlineData("123(((((123 + 123)", "30258")]
+        [InlineData("123 + 321 abc", "444")]
+
+        public void Calculation_ShouldReturnAnError_IfSourceIsIncorrectlySet(string source, string output)
         {
             var result = _calc.StartCalculating(source);
             result.Should().Be(output);
         }
 
         [Theory]
-        [InlineData("()", "Expression error")]
-        [InlineData("123()", "Expression error")]
-        [InlineData("()123+123", "Expression error")]
-        [InlineData("123(123)", "Expression error")]
-        [InlineData("123 + 321 abc", "Expression error")]
-        public void Calculation_ShouldReturnAnError_IfSourceIsUncorrect(string source, string output)
+        [InlineData(" 1 + 2 * ( 4 / 2 ) ", "5")]
+        [InlineData("2+2 * 2/ 2", "4")]
+        [InlineData("0/2","0")]
+        [InlineData("(4,5+4,5)/2","4,5")]
+        [InlineData("1,1+2,2", "3,3")]
+        [InlineData("999999999999999999*999999999999999999", "1E+36")]
+
+        public void Calculation_ShouldReturnCorrectANumberOfTypeDouble_IfSourceIsAnExpressionWithPriorityOperators(string source, string output)
         {
             var result = _calc.StartCalculating(source);
             result.Should().Be(output);
@@ -80,21 +93,87 @@ namespace Calc
                 symbol = '\0';
         }
 
-        public string StartCalculating(string SourceStr)
+        public void Handler(string SourceStr)
         {
             _string = SourceStr.Replace(" ", "");
+            Regex _regex = new Regex(@"[A-Za-z~!@#$%^&_\|]}[{'\"";:?><]");
+            _string = _regex.Replace(_string, string.Empty);
+
+            Stack<char> stack = new Stack<char>();
+            SourceStr = "";
+            int index;
+            foreach (char c in _string)
+            {
+                if (c == '(')
+                {
+                    stack.Push(c);
+                    SourceStr += c;
+                }
+                else if (c == ')' && stack.Count > 0)
+                {
+                    stack.Pop();
+                    SourceStr += c;
+                }
+                else 
+                    SourceStr += c;
+            }
+            while (stack.Count > 0)
+            {
+                stack.Pop();
+                index = SourceStr.IndexOf('(');
+                SourceStr = SourceStr.Remove(index, 1);
+            }
+            _string = SourceStr;
+
+            indexsrc = 0;
+            index = 0;
+
+            GetSymbol();
+            while (symbol != '\0')
+            {
+                if (symbol == '(')
+                {
+                    GetSymbol();
+                    index++;
+                    if (symbol == ')')
+                    {
+                        _string = _string.Remove(index, 1);
+                        _string = _string.Remove(index - 1, 1);
+                    }
+                    else if (symbol >= '0' && symbol <= '9')
+                    {
+                        if (index - 2 >= 0)
+                            if (_string[index - 2] >= '0' && _string[index - 2] <= '9')
+                            {
+                                StringBuilder stringBuilder = new StringBuilder(_string);
+                                stringBuilder.Insert(index - 1, "*");
+                                _string = stringBuilder.ToString();
+                            }
+                    }
+                }
+                GetSymbol();
+                index++;
+            }
+        }
+
+        public string StartCalculating(string SourceStr)
+        {
+            Handler(SourceStr);
             indexsrc = 0;
             GetSymbol();
-            try
+            double value = MethodE();
+            if (Math.Floor(value) == value)
+                return value.ToString();
+            else
             {
-                return MethodE().ToString();
+                string formattedValue = Math.Round(value, 5).ToString("0.#####");
+                formattedValue = formattedValue.TrimEnd('0');
+                if (formattedValue.EndsWith("."))
+                {
+                    formattedValue = formattedValue.Substring(0, formattedValue.Length - 1);
+                }
+                return formattedValue.ToString();
             }
-            catch(Exception ex)
-            {
-                return ex.Message;
-            }
-            
-
         }
         private double MethodE()
         {
@@ -130,7 +209,7 @@ namespace Calc
             if (symbol == '(')
             {
                 GetSymbol();
-                if (symbol == ')') throw new Exception("Expression error");
+                if (symbol == ')') return 0;
                 x = MethodE();
                 GetSymbol();
             }
@@ -143,9 +222,6 @@ namespace Calc
                 }
                 else if (symbol >= '0' && symbol <= '9')
                     x = MethodC();
-                if (symbol >= 'a' && symbol <= 'z')
-                    throw new Exception("Expression error");
-                if (symbol == '(') throw new Exception("Expression error");
             }
             return x;
         }
