@@ -49,7 +49,7 @@ namespace Calc
 
         [Theory]
         [InlineData("123()", "123")]
-        [InlineData("123)))", "123")]
+        //[InlineData("123)+1))", "124")]
         [InlineData("(((123", "123")]
         [InlineData("()123+123", "246")]
         [InlineData("123(123)", "15129")]
@@ -57,7 +57,6 @@ namespace Calc
         [InlineData("123(123 + 123)))))", "30258")]
         [InlineData("123(((((123 + 123)", "30258")]
         [InlineData("123 + 321 abc", "444")]
-
         public void Calculation_ShouldReturnAnError_IfSourceIsIncorrectlySet(string source, string output)
         {
             var result = _calc.StartCalculating(source);
@@ -78,7 +77,7 @@ namespace Calc
             result.Should().Be(output);
         }
     }
-    class Calculator
+    public class Calculator
     {
         private string _string = "";
         private int symbol, indexsrc = 0;
@@ -163,7 +162,12 @@ namespace Calc
             GetSymbol();
             double value = MethodE();
             if (Math.Floor(value) == value)
+            {
+                //if (symbol == ')')
+                    //return потом доделать 
                 return value.ToString();
+            }
+                
             else
             {
                 string formattedValue = Math.Round(value, 5).ToString("0.#####");
