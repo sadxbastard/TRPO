@@ -49,9 +49,11 @@ namespace Calc
 
         [Theory]
         [InlineData("123()", "123")]
-        //[InlineData("123)+1))", "124")]
+        [InlineData("123)+1))", "124")]
         [InlineData("(((123", "123")]
         [InlineData("()123+123", "246")]
+        [InlineData("2()()()+2", "4")]
+        [InlineData("2+2()()()+4", "8")]
         [InlineData("123(123)", "15129")]
         [InlineData("123(123 + 123)", "30258")]
         [InlineData("123(123 + 123)))))", "30258")]
@@ -98,37 +100,11 @@ namespace Calc
             Regex _regex = new Regex(@"[A-Za-z~!@#$%^&_\|]}[{'\"";:?><]");
             _string = _regex.Replace(_string, string.Empty);
 
-            Stack<char> stack = new Stack<char>();
-            SourceStr = "";
-            int index;
-            foreach (char c in _string)
-            {
-                if (c == '(')
-                {
-                    stack.Push(c);
-                    SourceStr += c;
-                }
-                else if (c == ')' && stack.Count > 0)
-                {
-                    stack.Pop();
-                    SourceStr += c;
-                }
-                else 
-                    SourceStr += c;
-            }
-            while (stack.Count > 0)
-            {
-                stack.Pop();
-                index = SourceStr.IndexOf('(');
-                SourceStr = SourceStr.Remove(index, 1);
-            }
-            _string = SourceStr;
-
             indexsrc = 0;
-            index = 0;
+            int index = 0;
 
             GetSymbol();
-            while (symbol != '\0')
+            for (; index < _string.Length;)
             {
                 if (symbol == '(')
                 {
@@ -138,6 +114,8 @@ namespace Calc
                     {
                         _string = _string.Remove(index, 1);
                         _string = _string.Remove(index - 1, 1);
+                        index -= 2;
+                        indexsrc -= 2;
                     }
                     else if (symbol >= '0' && symbol <= '9')
                     {
@@ -150,8 +128,11 @@ namespace Calc
                             }
                     }
                 }
-                GetSymbol();
-                index++;
+                else
+                {
+                    GetSymbol();
+                    index++;
+                }
             }
         }
 
@@ -161,23 +142,14 @@ namespace Calc
             indexsrc = 0;
             GetSymbol();
             double value = MethodE();
-            if (Math.Floor(value) == value)
+            if (Math.Floor(value) == value) return value.ToString();
+            string formattedValue = Math.Round(value, 5).ToString("0.#####");
+            formattedValue = formattedValue.TrimEnd('0');
+            if (formattedValue.EndsWith("."))
             {
-                //if (symbol == ')')
-                    //return потом доделать 
-                return value.ToString();
+                formattedValue = formattedValue.Substring(0, formattedValue.Length - 1);
             }
-                
-            else
-            {
-                string formattedValue = Math.Round(value, 5).ToString("0.#####");
-                formattedValue = formattedValue.TrimEnd('0');
-                if (formattedValue.EndsWith("."))
-                {
-                    formattedValue = formattedValue.Substring(0, formattedValue.Length - 1);
-                }
-                return formattedValue.ToString();
-            }
+            return formattedValue;
         }
         private double MethodE()
         {
@@ -213,7 +185,7 @@ namespace Calc
             if (symbol == '(')
             {
                 GetSymbol();
-                if (symbol == ')') return 0;
+                //if (symbol == ')') return 0;
                 x = MethodE();
                 GetSymbol();
             }

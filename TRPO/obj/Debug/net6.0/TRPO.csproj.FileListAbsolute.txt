@@ -204,3 +204,4 @@ C:\Помойка\Учеба\ТРПО\TRPO\TRPO\obj\Debug\net6.0\refint\TRPO.dll
 C:\Помойка\Учеба\ТРПО\TRPO\TRPO\obj\Debug\net6.0\TRPO.pdb
 C:\Помойка\Учеба\ТРПО\TRPO\TRPO\obj\Debug\net6.0\TRPO.genruntimeconfig.cache
 C:\Помойка\Учеба\ТРПО\TRPO\TRPO\obj\Debug\net6.0\ref\TRPO.dll
+C:\Users\SADXBVSTVRD\Учеба\3 курс\TRPO\TRPO\obj\Debug\net6.0\TRPO.sourcelink.json
