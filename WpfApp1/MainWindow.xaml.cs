@@ -28,20 +28,11 @@ namespace WpfApp1
             DataContext = new MainViewModel();
             
         }
-
-        //private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
-        //{
-        //    var textBox = sender as TextBox;
-        //    textBox.CaretIndex = textBox.Text.Length;
-        //    textBox.ScrollToHorizontalOffset(double.MaxValue);
-        //}
     }
     class MainViewModel : INotifyPropertyChanged
     {
 
         private string _inputString = string.Empty;
-        //private string _outputString = string.Empty;
-        //private bool _operationFlag = false;
         private Calculator _calculator = new Calculator();
 
         public MainViewModel()
@@ -49,31 +40,17 @@ namespace WpfApp1
             WritingACharCommand = new RelayCommand<string>(ch =>
             {
                 InputString += ch;
-                //if (OperationFlag)
-                //{
-                //    OutputString = Calculator.StartCalculating(_inputString);
-                //}
             });
 
             ClearCommand = new RelayCommand(() =>
             {
                 InputString = string.Empty;
-                //OutputString = string.Empty;
-                //OperationFlag = false;
             }, () => string.IsNullOrWhiteSpace(_inputString) == false);
 
             Calculate = new RelayCommand<string>(ch =>
             {
                 InputString = Calculator.StartCalculating(_inputString);
-                //OutputString = string.Empty;
-                //OperationFlag = false;
             }, ch => string.IsNullOrWhiteSpace(_inputString) == false);
-
-            //OperationCommand = new RelayCommand<string>(ch =>
-            //{
-            //    InputString += ch;
-            //    //OperationFlag = true;
-            //});
         }
 
         public string InputString
@@ -86,29 +63,8 @@ namespace WpfApp1
 
                 ClearCommand.NotifyCanExecuteChanged();
                 Calculate.NotifyCanExecuteChanged();
-                //OutputString = Calculator.StartCalculating(_inputString);
             }
         }
-        //public string OutputString
-        //{
-        //    get => _outputString;
-        //    set
-        //    {
-        //        _outputString = value;
-        //        OnPropertyChanged();
-
-        //        Calculate.NotifyCanExecuteChanged();
-        //    }
-        //}
-
-        //public bool OperationFlag
-        //{
-        //    get => _operationFlag;
-        //    set
-        //    {
-        //        _operationFlag = value;
-        //    }
-        //}
         public Calculator Calculator
         {
             get => _calculator;
@@ -131,14 +87,5 @@ namespace WpfApp1
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
-        //protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        //{
-        //    if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-        //    field = value;
-        //    OnPropertyChanged(propertyName);
-        //    return true;
-        //}
-
     }
 }
