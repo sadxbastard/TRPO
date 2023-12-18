@@ -29,10 +29,11 @@ namespace WpfApp1
             
         }
     }
-    class MainViewModel : INotifyPropertyChanged
+    class MainViewModel : INotifyPropertyChanged, IDataErrorInfo
     {
 
         private string _inputString = string.Empty;
+        private bool _isValid;
         private Calculator _calculator = new Calculator();
 
         public MainViewModel()
@@ -47,9 +48,18 @@ namespace WpfApp1
                 InputString = string.Empty;
             }, () => string.IsNullOrWhiteSpace(_inputString) == false);
 
+            DeleteCommand = new RelayCommand(() =>
+            {
+                InputString = InputString.Remove(InputString.Length - 1, 1);
+            }, () => string.IsNullOrWhiteSpace(_inputString) == false);
+
             Calculate = new RelayCommand<string>(ch =>
             {
-                InputString = Calculator.StartCalculating(_inputString);
+                _isValid = true;
+                _isValid = IsValid;
+                if (_isValid) { InputString = Calculator.StartCalculating(_inputString); }
+                else OnPropertyChanged(nameof(InputString));
+                
             }, ch => string.IsNullOrWhiteSpace(_inputString) == false);
         }
 
@@ -59,9 +69,11 @@ namespace WpfApp1
             set
             {
                 _inputString = value;
-                OnPropertyChanged();
 
+                _errors[nameof(InputString)] = null;
+                OnPropertyChanged();
                 ClearCommand.NotifyCanExecuteChanged();
+                DeleteCommand.NotifyCanExecuteChanged();
                 Calculate.NotifyCanExecuteChanged();
             }
         }
@@ -72,7 +84,49 @@ namespace WpfApp1
             {
                 _calculator = value;
                 OnPropertyChanged();
+                
+                Calculate.NotifyCanExecuteChanged();
+            }
+        }
 
+        public bool IsValid
+        {
+            get
+            {
+                Stack<char> stack = new Stack<char>();
+                foreach (char c in InputString)
+                {
+                    if (c == '(')
+                    {
+                        stack.Push(c);
+                    }
+                    else if (c == ')')
+                    {
+                        if (stack.Count > 0)
+                        {
+                            stack.Pop();
+                        }
+                        else
+                        {
+                            _errors[nameof(InputString)] = "Не хватает открывающей скобки";
+                            _isValid = false;
+                            return _isValid;
+                        }
+                    }
+                }
+
+                if (stack.Count > 0)
+                {
+                    _errors[nameof(InputString)] = "Не хватает закрывающей скобки";
+                    _isValid = false;
+                    return _isValid;
+                }
+                return _isValid;
+            }
+            set
+            {
+                _isValid = value;
+                OnPropertyChanged();
                 Calculate.NotifyCanExecuteChanged();
             }
         }
@@ -80,12 +134,32 @@ namespace WpfApp1
         public RelayCommand<string> WritingACharCommand { get; }
         public RelayCommand ClearCommand { get; }
         public RelayCommand<string> Calculate { get; }
-        public RelayCommand<string> OperationCommand { get; }
+        public RelayCommand DeleteCommand { get; }
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private Dictionary<string, string> _errors = new Dictionary<string, string>();
+
+        public string Error
+        {
+            get
+            {
+                return string.Join(Environment.NewLine, _errors.Values);
+            }
+
+        }
+
+        public string this[string columnName]
+        {
+            get
+            {
+                return _errors.TryGetValue(columnName, out var value) ? value : string.Empty;
+            }
         }
     }
 }
