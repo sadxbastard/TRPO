@@ -93,6 +93,9 @@ namespace WpfApp1
         {
             get
             {
+                bool valueF = false;
+                bool commaF = false;
+                bool opF = false;
                 Stack<char> stack = new Stack<char>();
                 foreach (char c in InputString)
                 {
@@ -109,17 +112,46 @@ namespace WpfApp1
                         else
                         {
                             _errors[nameof(InputString)] = "Не хватает открывающей скобки";
-                            _isValid = false;
-                            return _isValid;
+                            return false;
                         }
+                    }
+                    if (c == ',')
+                    {
+                        if (commaF && !opF)
+                        {
+                            _errors[nameof(InputString)] = "Невалидное выражение";
+                            return false;
+                        }
+                        if (!valueF)
+                        {
+                            _errors[nameof(InputString)] = "Перед запятой не хватает числа";
+                            return false;
+                        }
+                        commaF = true;
+                        valueF = false;
+                    }
+                    else if (c >= '0' && c <= '9')
+                    {
+                        valueF = true;
+                        opF = false;
+                    }
+                    else if (c is '+' or '-' or '/' or '*')
+                    {
+                        if (commaF && !valueF)
+                        {
+                            _errors[nameof(InputString)] = "После запятой не хватает числа";
+                            return false;
+                        }
+                        opF = true;
+                        commaF = false;
+                        valueF = false;
                     }
                 }
 
                 if (stack.Count > 0)
                 {
                     _errors[nameof(InputString)] = "Не хватает закрывающей скобки";
-                    _isValid = false;
-                    return _isValid;
+                    return false;
                 }
                 return _isValid;
             }

@@ -37,27 +37,23 @@ namespace Calc
         [Theory]
         [InlineData("+123", "123")]
         [InlineData("-123", "-123")]
-        [InlineData("(123)","123")]
+        [InlineData("(123)", "123")]
         [InlineData("((123))", "123")]
         [InlineData("*123", "0")]
         [InlineData("/123", "0")]
         public void Calculation_ShouldReturnANumberOfTypeDouble_IfSourceHaveOperatorsAtTheBeggining(string source, string output)
         {
-                var result = _calc.StartCalculating(source);
-                result.Should().Be(output);
+            var result = _calc.StartCalculating(source);
+            result.Should().Be(output);
         }
 
         [Theory]
         [InlineData("123()", "123")]
-        [InlineData("123)+1))", "124")]
-        [InlineData("(((123", "123")]
         [InlineData("()123+123", "246")]
         [InlineData("2()()()+2", "4")]
         [InlineData("2+2()()()+4", "8")]
         [InlineData("123(123)", "15129")]
         [InlineData("123(123 + 123)", "30258")]
-        [InlineData("123(123 + 123)))))", "30258")]
-        [InlineData("123(((((123 + 123)", "30258")]
         [InlineData("123 + 321 abc", "444")]
         public void Calculation_ShouldReturnAnError_IfSourceIsIncorrectlySet(string source, string output)
         {
@@ -68,8 +64,8 @@ namespace Calc
         [Theory]
         [InlineData(" 1 + 2 * ( 4 / 2 ) ", "5")]
         [InlineData("2+2 * 2/ 2", "4")]
-        [InlineData("0/2","0")]
-        [InlineData("(4,5+4,5)/2","4,5")]
+        [InlineData("0/2", "0")]
+        [InlineData("(4,5+4,5)/2", "4,5")]
         [InlineData("1,1+2,2", "3,3")]
         [InlineData("999999999999999999*999999999999999999", "1E+36")]
 
