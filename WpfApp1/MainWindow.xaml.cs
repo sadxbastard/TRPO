@@ -76,7 +76,11 @@ namespace WpfApp1
 
             ReadMemory = new RelayCommand(() =>
             {
-                InputString = _memory.GetExpression();
+                var ch = InputString[InputString.Length - 1];
+                var result = _memory.GetExpression();
+                if (ch != '+' && ch != '-' && ch != '/' && ch != '*')
+                    InputString = result;
+                else InputString += result;
                 if (InputString is "") { InputString = "0"; }
             });
 
