@@ -8,6 +8,4 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = WpfApp1
-build_property.ProjectDir = C:\Users\SADXBVSTVRD\Учеба\3 курс\TRPO\WpfApp1\
-build_property.EnableComHosting = 
-build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.ProjectDir = C:\Помойка\Учеба\ТРПО\TRPO\WpfApp1\

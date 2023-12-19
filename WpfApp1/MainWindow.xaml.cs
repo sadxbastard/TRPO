@@ -17,6 +17,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Calc;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace WpfApp1
 {
@@ -25,32 +26,43 @@ namespace WpfApp1
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
-            
+            var mainViewModel = App.Provider.GetRequiredService<MainViewModel>();
+            DataContext = mainViewModel;
         }
     }
     class MainViewModel : INotifyPropertyChanged, IDataErrorInfo
     {
-
-        private string _inputString = string.Empty;
+        private string _inputString;
         private bool _isValid;
-        private Calculator _calculator = new Calculator();
+        private IMemory _memory;
+        private Calculator _calculator;
 
-        public MainViewModel()
+        public MainViewModel(IMemory memory)
         {
+            _calculator = new Calculator();
+            _memory = memory;
+            _inputString = "0";
+
             WritingACharCommand = new RelayCommand<string>(ch =>
             {
+                if (InputString is "0" && ch is not "+" or "-" or "/" or "*" && ch != ",") InputString = string.Empty;
+                else if (InputString is not "0" && ch is "+" or "-" or "/" or "*" && InputString.Length > 0)
+                {
+                    if (InputString[InputString.Length - 1] is '+' or '-' or '/' or '*')
+                        InputString = InputString.Substring(0, InputString.Length - 1);
+                }
                 InputString += ch;
             });
 
             ClearCommand = new RelayCommand(() =>
             {
-                InputString = string.Empty;
+                InputString = "0";
             }, () => string.IsNullOrWhiteSpace(_inputString) == false);
 
             DeleteCommand = new RelayCommand(() =>
             {
                 InputString = InputString.Remove(InputString.Length - 1, 1);
+                if (InputString is "") { InputString = "0"; }
             }, () => string.IsNullOrWhiteSpace(_inputString) == false);
 
             Calculate = new RelayCommand<string>(ch =>
@@ -61,6 +73,27 @@ namespace WpfApp1
                 else OnPropertyChanged(nameof(InputString));
                 
             }, ch => string.IsNullOrWhiteSpace(_inputString) == false);
+
+            ReadMemory = new RelayCommand(() =>
+            {
+                InputString = _memory.GetExpression();
+                if (InputString is "") { InputString = "0"; }
+            });
+
+            ClearMemory = new RelayCommand(() =>
+            {
+                _memory.Delete();
+            });
+
+            SumMemory = new RelayCommand(() =>
+            {
+                _memory.Put(_inputString);
+            });
+
+            SubMemory = new RelayCommand(() =>
+            {
+                _memory.Put(_inputString + "*-1" );
+            });
         }
 
         public string InputString
@@ -167,6 +200,11 @@ namespace WpfApp1
         public RelayCommand ClearCommand { get; }
         public RelayCommand<string> Calculate { get; }
         public RelayCommand DeleteCommand { get; }
+        public RelayCommand ReadMemory {  get; }
+        public RelayCommand ClearMemory { get; }
+        public RelayCommand SumMemory { get; }
+        public RelayCommand SubMemory { get; }
+
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
