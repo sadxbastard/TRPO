@@ -16,9 +16,9 @@ namespace WpfApp1
             base.OnStartup(e);
 
             var serviceCollection = new ServiceCollection();
-            //serviceCollection.AddSingleton<IMemory, RAMMemory>();
+            serviceCollection.AddSingleton<IMemory, RAMMemory>();
             //serviceCollection.AddSingleton<IMemory, FileMemory>();
-            serviceCollection.AddSingleton<IMemory, DbMemory>();
+            //serviceCollection.AddSingleton<IMemory, DbMemory>();
 
             serviceCollection.AddSingleton<MainViewModel>();
             Provider = serviceCollection.BuildServiceProvider();

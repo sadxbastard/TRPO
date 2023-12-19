@@ -138,7 +138,13 @@ namespace Calc
             indexsrc = 0;
             GetSymbol();
             double value = MethodE();
-            if (Math.Floor(value) == value) return value.ToString();
+            if (Math.Floor(value) == value)
+            {
+                var temp = value.ToString();
+                if (temp == "-0")
+                    return "0";
+                else return temp;
+            }
             string formattedValue = Math.Round(value, 5).ToString("0.#####");
             formattedValue = formattedValue.TrimEnd('0');
             if (formattedValue.EndsWith("."))

@@ -45,7 +45,7 @@ namespace WpfApp1
 
             WritingACharCommand = new RelayCommand<string>(ch =>
             {
-                if (InputString is "0" && ch is not "+" or "-" or "/" or "*" && ch != ",") InputString = string.Empty;
+                if (InputString is "0" && ch != "+" && ch != "/" && ch != "*" && ch != ",") InputString = string.Empty;
                 else if (InputString is not "0" && ch is "+" or "-" or "/" or "*" && InputString.Length > 0)
                 {
                     if (InputString[InputString.Length - 1] is '+' or '-' or '/' or '*')
