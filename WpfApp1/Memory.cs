@@ -24,7 +24,7 @@ namespace WpfApp1
 
         public void Put(string expression)
         {
-            _memory = _calculator.StartCalculating(_memory + expression);
+            _memory = _calculator.StartCalculating(_memory + "+" + expression);
         }
         public string GetExpression()
         {

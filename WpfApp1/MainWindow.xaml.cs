@@ -45,10 +45,10 @@ namespace WpfApp1
 
             WritingACharCommand = new RelayCommand<string>(ch =>
             {
-                if (InputString is "0" && ch != "+" && ch != "/" && ch != "*" && ch != ",") InputString = string.Empty;
+                if ((InputString == "0" || InputString == "0*" || InputString == "0+" || InputString == "0/") && ch != "+" && ch != "/" && ch != "*" && ch != ",") InputString = string.Empty;
                 else if (InputString is not "0" && ch is "+" or "-" or "/" or "*" && InputString.Length > 0)
                 {
-                    if (InputString[InputString.Length - 1] is '+' or '-' or '/' or '*')
+                    if (InputString.Length > 1 && InputString[InputString.Length - 1] is '+' or '-' or '/' or '*')
                         InputString = InputString.Substring(0, InputString.Length - 1);
                 }
                 InputString += ch;
@@ -96,7 +96,8 @@ namespace WpfApp1
 
             SubMemory = new RelayCommand(() =>
             {
-                _memory.Put(_inputString + "*-1" );
+                StringBuilder tempStr = new StringBuilder(_inputString);
+                _memory.Put(tempStr.Append("*-1").ToString());
             });
         }
 
@@ -106,9 +107,9 @@ namespace WpfApp1
             set
             {
                 _inputString = value;
-
-                _errors[nameof(InputString)] = null;
+                Validate();
                 OnPropertyChanged();
+                WritingACharCommand.NotifyCanExecuteChanged();
                 ClearCommand.NotifyCanExecuteChanged();
                 DeleteCommand.NotifyCanExecuteChanged();
                 Calculate.NotifyCanExecuteChanged();
@@ -121,7 +122,6 @@ namespace WpfApp1
             {
                 _calculator = value;
                 OnPropertyChanged();
-                
                 Calculate.NotifyCanExecuteChanged();
             }
         }
@@ -130,74 +130,74 @@ namespace WpfApp1
         {
             get
             {
-                bool valueF = false;
-                bool commaF = false;
-                bool opF = false;
-                Stack<char> stack = new Stack<char>();
-                foreach (char c in InputString)
-                {
-                    if (c == '(')
-                    {
-                        stack.Push(c);
-                    }
-                    else if (c == ')')
-                    {
-                        if (stack.Count > 0)
-                        {
-                            stack.Pop();
-                        }
-                        else
-                        {
-                            _errors[nameof(InputString)] = "Не хватает открывающей скобки";
-                            return false;
-                        }
-                    }
-                    if (c == ',')
-                    {
-                        if (commaF && !opF)
-                        {
-                            _errors[nameof(InputString)] = "Невалидное выражение";
-                            return false;
-                        }
-                        if (!valueF)
-                        {
-                            _errors[nameof(InputString)] = "Перед запятой не хватает числа";
-                            return false;
-                        }
-                        commaF = true;
-                        valueF = false;
-                    }
-                    else if (c >= '0' && c <= '9')
-                    {
-                        valueF = true;
-                        opF = false;
-                    }
-                    else if (c is '+' or '-' or '/' or '*')
-                    {
-                        if (commaF && !valueF)
-                        {
-                            _errors[nameof(InputString)] = "После запятой не хватает числа";
-                            return false;
-                        }
-                        opF = true;
-                        commaF = false;
-                        valueF = false;
-                    }
-                }
+                return _errors.Values.All(x=> string.IsNullOrEmpty(x));
+            }
+        }
 
-                if (stack.Count > 0)
-                {
-                    _errors[nameof(InputString)] = "Не хватает закрывающей скобки";
-                    return false;
-                }
-                return _isValid;
-            }
-            set
+        public bool Validate()
+        {
+            bool valueF = false;
+            bool commaF = false;
+            bool opF = false;
+            Stack<char> stack = new Stack<char>();
+            _errors.Clear();
+            foreach (char c in InputString)
             {
-                _isValid = value;
-                OnPropertyChanged();
-                Calculate.NotifyCanExecuteChanged();
+                if (c == '(')
+                {
+                    stack.Push(c);
+                }
+                else if (c == ')')
+                {
+                    if (stack.Count > 0)
+                    {
+                        stack.Pop();
+                    }
+                    else
+                    {
+                        _errors[nameof(InputString)] = "Не хватает открывающей скобки";
+                        return false;
+                    }
+                }
+                if (c == ',')
+                {
+                    if (commaF && !opF)
+                    {
+                        _errors[nameof(InputString)] = "Невалидное выражение";
+                        return false;
+                    }
+                    if (!valueF)
+                    {
+                        _errors[nameof(InputString)] = "Перед запятой не хватает числа";
+                        return false;
+                    }
+                    commaF = true;
+                    valueF = false;
+                }
+                else if (c >= '0' && c <= '9')
+                {
+                    valueF = true;
+                    opF = false;
+                }
+                else if (c is '+' or '-' or '/' or '*')
+                {
+                    if (commaF && !valueF)
+                    {
+                        _errors[nameof(InputString)] = "После запятой не хватает числа";
+                        return false;
+                    }
+                    opF = true;
+                    commaF = false;
+                    valueF = false;
+                }
             }
+
+            if (stack.Count > 0)
+            {
+                _errors[nameof(InputString)] = "Не хватает закрывающей скобки";
+                return false;
+            }
+            return _isValid;
         }
 
         public RelayCommand<string> WritingACharCommand { get; }
